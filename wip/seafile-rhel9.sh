@@ -4,6 +4,8 @@
 ### install Seafile on Rocky Linux 9 via docker compose
 ###
 
+set -e
+
 run_check() {
     if [ -f ~/sfscript_check_run ]; then FIRSTRUN="false"; else FIRSTRUN="true"; fi
 }
