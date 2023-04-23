@@ -9,6 +9,7 @@ run_check() {
 }
 
 first_run() {
+    echo "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n"
     echo "Installing and configuring Docker..." && sleep 1
     sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     sudo dnf install -y docker-ce docker-ce-cli containerd.io
@@ -16,16 +17,16 @@ first_run() {
     sudo usermod -aG docker $(whoami)
     touch ~/sfscript_check_run
     echo "\n\n System will reboot in 10 seconds for group changes to take effect. Terminate (Ctrl + C) to stop this.\n Run the script again to continue with configuration"
-    sudo reboot
+    sleep 10 && sudo reboot
 }
 
 second_run() {
-    sudo mkdir /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
-    cd /srv/www/seafile && curl -fLO https://download.seafile.com/seafhttp/files/0e1dcbfb-d4a0-49e2-9c14-dc954389053b/docker-compose.yml
+    sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
+    cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
     docker compose up -d
     docker compose down
     clear; sudo blkid
-    echo "\n\nPlease copy the UUID of the drive you'd like to use for Seafile data and paste it here, without quotes"
+    echo "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes"
     read -p "Enter here: " uuid
     echo "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)"
     read -p "Enter here: " drive_loc
@@ -42,7 +43,7 @@ second_run() {
     sudo cp -r /opt/seafile-data /opt/seafile-data_bak
     sudo cp -r /opt/seafile-data $drive_loc/
     sudo rm -rf /opt/seafile-data
-    sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker_compose.yml
+    sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
     docker compose up -d
     
     echo "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users."
@@ -68,6 +69,7 @@ main() {
     echo "\nDone!"
     echo "Seafile .yml file is at: /srv/www/seafile"
     echo "Seafile data drive is mounted at: $drive_loc"
+    echo "Original out-of-the-box /opt/seafile-data is now at /opt/seafile-data_bak"
 }
 
 main
