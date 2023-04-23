@@ -19,25 +19,28 @@ first_run() {
     sudo dnf install -y docker-ce docker-ce-cli containerd.io
     sudo systemctl enable --now docker 
     sudo usermod -aG docker $(whoami)
-    touch ~/sfscript_check_run
+    echo "true" > ~/sfscript_check_run
     printf "\n\n !! System will reboot in 10 seconds for group changes to take effect. !! Terminate (Ctrl + C) to stop this.\n !! Run the script again to continue with configuration !!"
     sleep 10 && sudo reboot
 }
 
 second_run() {
-    sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
+    printf "\nSetting up directories and mounts for Seafile...\n"
+    printf "\n!! You should have a partition made (and formatted if new) for use as Seafile data! !!\n If you do not, exit this script and create it, then run this script again.\n"
+    sleep 7 && sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
     cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
     clear; lsblk && sudo blkid
     printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
     read -p "Enter here: " uuid
     printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)\n"
-    read -p "Enter here: " drive_loc
+    read -sp "Enter here: " drive_loc
 
     filesystem=$(lsblk -f /dev/disk/by-uuid/$uuid)
     filesystem=${filesystem#*$'\n'}
     filesystem=$(echo "$filesystem" | awk  '{print $2}')
 
     echo "UUID=$uuid $drive_loc $filesystem  defaults  0 0" | sudo tee -a /etc/fstab
+    printf "\nThis partition has been added to fstab and will mount automatically every reboot.\n" && sleep 2
     sudo systemctl daemon-reload
     [ ! -d "$drive_loc" ] && sudo mkdir "$drive_loc"
     sudo mount -a
@@ -46,11 +49,18 @@ second_run() {
     sudo cp -r /opt/seafile-data $drive_loc/
     sudo rm -rf /opt/seafile-data
     sudo mkdir -p /shared/seafile/seafile-data
+
     sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
+    printf "\nNow let's make an admin user! Enter an email to use for the admin user.\n" && read -p "Enter here: " admin_email
+    read -sp "Now a password: " admin_password
+    sed -i "s%me@example.com%$admin_email%g" docker-compose.yml
+    sed -i "s%asecret%$admin_password%g" docker-compose.yml
+
     docker compose up -d
     
-    printf "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users.\n"
-    docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh
+    ## see if a user can be remotely removed
+    #printf "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users.\n"
+    #docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh
 }
 
 tailscale() {
@@ -66,6 +76,7 @@ main() {
     if [ "$FIRSTRUN" == "true" ]; then first_run; else second_run; fi
 
     rm ~/sfscript_check_run
+    printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1):80.\n"
     read -p "Install and configure Tailscale? (Y/n)" tailscaler
     if [ "${tailscaler,,}" == "y" ]; then tailscale; else echo "Ok, skipped."; fi
 
