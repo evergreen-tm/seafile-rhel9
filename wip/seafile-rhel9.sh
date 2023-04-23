@@ -33,7 +33,7 @@ second_run() {
     printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
     read -p "Enter here: " uuid
     printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)\n"
-    read -sp "Enter here: " drive_loc
+    read -p "Enter here: " drive_loc
 
     filesystem=$(lsblk -f /dev/disk/by-uuid/$uuid)
     filesystem=${filesystem#*$'\n'}
