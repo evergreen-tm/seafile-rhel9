@@ -20,15 +20,13 @@ first_run() {
     sudo systemctl enable --now docker 
     sudo usermod -aG docker $(whoami)
     touch ~/sfscript_check_run
-    printf "\n\n System will reboot in 10 seconds for group changes to take effect. Terminate (Ctrl + C) to stop this.\n Run the script again to continue with configuration"
+    printf "\n\n !! System will reboot in 10 seconds for group changes to take effect. !! Terminate (Ctrl + C) to stop this.\n !! Run the script again to continue with configuration !!"
     sleep 10 && sudo reboot
 }
 
 second_run() {
     sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
     cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
-    docker compose up -d
-    docker compose down
     clear; lsblk && sudo blkid
     printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
     read -p "Enter here: " uuid
