@@ -5,7 +5,7 @@
 ###
 
 run_check() {
-    if [ ! -f ~/sfscript_check_run ]; then FIRST_RUN="true"; else FIRST_RUN="false"; fi
+    if [ -f ~/sfscript_check_run ]; then FIRSTRUN="false"; else FIRSTRUN="true"; fi
 }
 
 first_run() {
@@ -58,6 +58,7 @@ tailscale() {
 }
 
 main() {
+    run_check
     if [ "$FIRSTRUN" == "true" ]; then first_run; else second_run; fi
 
     rm ~/sfscript_check_run
@@ -66,5 +67,7 @@ main() {
 
     echo "\nDone!"
     echo "Seafile .yml file is at: /srv/www/seafile"
-    echo "Seafile data drive is mounted at: $MOUNT_LOC"
+    echo "Seafile data drive is mounted at: $drive_loc"
 }
+
+main
