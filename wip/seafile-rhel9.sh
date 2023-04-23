@@ -9,7 +9,9 @@ run_check() {
 }
 
 first_run() {
-    echo "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n"
+    printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n"
+    echo "You should also have a partition pre-made to use for Seafile data" && sleep 10
+
     echo "Installing and configuring Docker..." && sleep 1
     sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
     sudo dnf install -y docker-ce docker-ce-cli containerd.io
