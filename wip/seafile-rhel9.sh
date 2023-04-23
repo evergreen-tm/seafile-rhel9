@@ -9,8 +9,8 @@ run_check() {
 }
 
 first_run() {
-    printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n"
-    printf "You should also have a partition pre-made to use for Seafile data" && sleep 10
+    printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n "
+    printf "You should also have a partition pre-made to use for Seafile data\n\n" && sleep 10
 
     echo "Installing and configuring Docker..." && sleep 1
     sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
@@ -28,9 +28,9 @@ second_run() {
     docker compose up -d
     docker compose down
     clear; sudo blkid
-    printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes"
+    printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
     read -p "Enter here: " uuid
-    printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)"
+    printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)\n"
     read -p "Enter here: " drive_loc
 
     filesystem=$(lsblk -f /dev/disk/by-uuid/$uuid)
@@ -48,7 +48,7 @@ second_run() {
     sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
     docker compose up -d
     
-    printf "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users."
+    printf "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users.\n"
     docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh
 }
 
