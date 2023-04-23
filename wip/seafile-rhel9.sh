@@ -51,7 +51,7 @@ second_run() {
     sudo mkdir -p /shared/seafile/seafile-data
 
     sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
-    printf "\nNow let's make an admin user! Enter an email to use for the admin user.\n" && read -p "Enter here: " admin_email
+    printf "\nNow let's make an admin user! Enter an email to assign to the admin user.\n" && read -p "Enter here: " admin_email
     read -sp "Now a password: " admin_password
     sed -i "s%me@example.com%$admin_email%g" docker-compose.yml
     sed -i "s%asecret%$admin_password%g" docker-compose.yml
