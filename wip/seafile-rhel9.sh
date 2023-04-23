@@ -27,7 +27,7 @@ second_run() {
     cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
     docker compose up -d
     docker compose down
-    clear; sudo blkid
+    clear; lsblk && sudo blkid
     printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
     read -p "Enter here: " uuid
     printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)\n"
@@ -39,12 +39,13 @@ second_run() {
 
     echo "UUID=$uuid $drive_loc $filesystem  defaults  0 0" | sudo tee -a /etc/fstab
     sudo systemctl daemon-reload
+    [ ! -d "$drive_loc" ] && sudo mkdir "$drive_loc"
     sudo mount -a
  
     sudo cp -r /opt/seafile-data /opt/seafile-data_bak
     sudo cp -r /opt/seafile-data $drive_loc/
     sudo rm -rf /opt/seafile-data
-    sudo chown -R $(whoami) $drive_loc/seafile-data/
+    sudo mkdir -p /shared/seafile/seafile-data
     sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
     docker compose up -d
     
