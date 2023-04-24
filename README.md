@@ -8,7 +8,7 @@ Select a drive partition to use for external storage
 Optionally install and start Tailscale to connect it to a tailnet
 
 ### What it will do soon:
-Automatically configure timezone for server  
+Automatically configure timezone for Seafile  
 Not break if the partition is already in fstab and/or already mounted  
 Not require a separate partition for data  
 More!
