@@ -16,7 +16,7 @@ setup() {
 	sudo dnf install -y docker-ce docker-ce-cli containerd.io
 	sudo systemctl enable --now docker 
 	sudo usermod -aG docker $(whoami)
-	newgrp docker	
+	sudo newgrp docker	
 
 	printf "\nSetting up directories and mounts for Seafile...\n"
 	printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
