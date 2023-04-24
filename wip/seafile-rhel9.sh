@@ -17,8 +17,8 @@ without_docker_group() {
 	sudo systemctl enable --now docker 
 	sudo usermod -aG docker $(whoami)
 
-    printf "\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
-    return 1
+	printf "\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
+	return 1
 }
 
 with_docker_group() {
