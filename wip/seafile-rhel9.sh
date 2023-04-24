@@ -15,8 +15,7 @@ setup() {
 	sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 	sudo dnf install -y docker-ce docker-ce-cli containerd.io
 	sudo systemctl enable --now docker 
-	sudo usermod -aG docker $(whoami)
-	sudo newgrp docker	
+	sudo usermod -aG docker $(whoami) && sg docker
 
 	printf "\nSetting up directories and mounts for Seafile...\n"
 	printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
