@@ -2,6 +2,7 @@
 
 ###
 ### install Seafile on Rocky Linux 9 via docker compose
+### version: 0.1
 ###
 
 set -e
@@ -15,11 +16,7 @@ setup() {
 	sudo dnf install -y docker-ce docker-ce-cli containerd.io
 	sudo systemctl enable --now docker 
 	sudo usermod -aG docker $(whoami)
-	
-	mkdir -p ~/.tmp/seafilescript
-
-	printf "\n\n Switching user to new shell via 'su' to refresh groups.\n"
-	su - $USER
+	newgrp docker	
 
 	printf "\nSetting up directories and mounts for Seafile...\n"
 	printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
@@ -69,7 +66,7 @@ tailscale() {
 
 main() {
 
-	#setup 
+	setup 
 
 	printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1) on port 80.\n\n"
 	read -p "Install and configure Tailscale? (Y/n) " tailscaler
