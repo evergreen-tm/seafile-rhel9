@@ -5,8 +5,6 @@
 ### version: 0.1
 ###
 
-## TODO: detect whether specified partition is already in fstab and/or already mounted, give option to change things like timezone
-
 set -e
 
 without_docker_group() {
@@ -24,9 +22,8 @@ without_docker_group() {
 }
 
 with_docker_group() {
-	printf "\nSetting up new directories and mounts for Seafile...\n"
-	printf "\n!! You should have a partition made to use with Seafile !!\nIf you do not, exit this script and create it, then run this script again.\n"
-	sleep 7 && sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
+	printf "\nSetting up Seafile...\n"
+	sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
 	cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
 	docker compose up -d
 	printf "\nGiving Seafile a 'settle time' of 20sec before shutting down again (issues with mysql pop up if this is not done)\n" && sleep 20
@@ -41,28 +38,30 @@ with_docker_group() {
 	filesystem=${filesystem#*$'\n'}
 	filesystem=$(echo "$filesystem" | awk '{print $2}')
 
-	echo "UUID=$uuid   $drive_loc   $filesystem	  defaults   0 0" | sudo tee -a /etc/fstab
-	printf "\nThis partition has been added to fstab and will mount automatically every reboot.\n" && sleep 2
-	sudo systemctl daemon-reload
-	[ ! -d "$drive_loc" ] && sudo mkdir "$drive_loc"
+	if grep $uuid /etc/fstab; then 
+		drive_loc=$(grep "$uuid" /etc/fstab | awk '{print $2}')
+		printf "\nPartition of UUID $uuid is already in fstab with mountpoint at $drive_loc; using this instead\n"
+	else 
+		echo "UUID=$uuid   $drive_loc   $filesystem	  defaults   0 0" | sudo tee -a /etc/fstab
+		printf "\nThis partition has been added to fstab and will mount automatically every reboot.\n" && sleep 2
+		sudo systemctl daemon-reload
+		[ ! -d "$drive_loc" ] && sudo mkdir "$drive_loc"
+	fi
+
 	sudo mount -a
  
-	sudo cp -r /opt/seafile-data /opt/seafile-data_bak
-	sudo cp -r /opt/seafile-data $drive_loc/
-	sudo rm -rf /opt/seafile-data
+	sudo mv /opt/seafile-data /opt/seafile-data_bak
+	sudo cp -r /opt/seafile-data_bak $drive_loc/seafile-data
 	sudo mkdir -p /shared/seafile/seafile-data
 
-	sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" /srv/www/seafile/docker-compose.yml
+	sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" docker-compose.yml
+	sed -i "s%Etc/UTC%$(timedatectl show --va -p Timezone)%g" docker-compose.yml
 	printf "\nNow let's make an admin user! Enter an email to use for the admin user.\n" && read -p "Enter here: " admin_email
 	read -sp "Now a password: " admin_password
 	sed -i "s%me@example.com%$admin_email%g" docker-compose.yml
 	sed -i "s%asecret%$admin_password%g" docker-compose.yml
 
 	docker compose up -d
-	
-	## see if a user can be remotely removed
-	#printf "\nYou will now create an admin user. Delete the default one after logging in at System Admin -> Users.\n"
-	#docker exec -it seafile /opt/seafile/seafile-server-latest/reset-admin.sh
 }
 
 tailscale() {
