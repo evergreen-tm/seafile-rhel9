@@ -51,7 +51,7 @@ with_docker_group() {
 	sudo mount -a
  
 	sudo mv /opt/seafile-data /opt/seafile-data_bak
-	sudo cp /opt/seafile-data_bak $drive_loc/seafile-data
+	sudo cp -r /opt/seafile-data_bak $drive_loc/seafile-data
 	sudo mkdir -p /shared/seafile/seafile-data
 
 	sed -i "s%- /opt/seafile-data:/shared%- $drive_loc/seafile-data:/shared%g" docker-compose.yml
