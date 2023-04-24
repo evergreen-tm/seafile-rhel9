@@ -6,7 +6,7 @@
 
 set -e
 
-first_run() {
+setup() {
     printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n "
     printf "You should also have a partition already setup to use for Seafile data\n\n" && sleep 10
 
@@ -18,11 +18,9 @@ first_run() {
     
     mkdir -p ~/.tmp/seafilescript
 
-    printf "\n\n !! System will reboot in 10 seconds for group changes to take effect. !! Terminate (Ctrl + C) to stop this.\n !! Run the script again to continue with configuration !!"
-    sleep 10 && sudo reboot
-}
+    printf "\n\n Switching user to new shell via 'su' to refresh groups.\n"
+    su - $USER
 
-second_run() {
     printf "\nSetting up directories and mounts for Seafile...\n"
     printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
     sleep 7 && sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
@@ -70,20 +68,20 @@ tailscale() {
 }
 
 main() {
-    if [ -d ~/.tmp ]; then DEL_TMP_DIR="false"; else DEL_TMP_DIR="true" && mkdir ~/.tmp; fi
-    if [ ! -d ~/.tmp/seafilescript ]; then FIRSTRUN="true"; else FIRSTRUN="false"; fi
-    if [ "$FIRSTRUN" == "true" ]; then first_run; else second_run; fi
 
-    if [ "$DEL_TMP_DIR" == "false" ]; then rm -rf ~/.tmp/seafilescript; else rm -rf ~/.tmp; fi   # using touch doesn't work for some reason, idk man im just a fish
+    #setup 
 
-    printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1) on port 80.\n"
-    read -p "Install and configure Tailscale? (Y/n)" tailscaler
+    printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1) on port 80.\n\n"
+    read -p "Install and configure Tailscale? (Y/n) " tailscaler
     if [ "${tailscaler,,}" == "y" ]; then tailscale; else echo "Ok, skipped."; fi
 
-    echo "\nDone!"
-    echo "Seafile .yml file is at: /srv/www/seafile"
-    echo "Seafile data drive is mounted at: $drive_loc"
-    echo "Original out-of-the-box /opt/seafile-data is now at /opt/seafile-data_bak"
+
+    printf "\nDone!\n"
+	cat <<- EOF
+	Seafile docker-compose.yml file's at:   /srv/www/seafile
+	Seafile data partition is mounted at:   $drive_loc
+	Original /opt/seafile-data is now at:   /opt/seafile-data_bak
+	EOF
 }
 
 main
