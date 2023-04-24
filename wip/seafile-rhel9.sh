@@ -16,7 +16,7 @@ first_run() {
     sudo systemctl enable --now docker 
     sudo usermod -aG docker $(whoami)
     
-    touch ~/.tmp/seafile_2ndrun
+    mkdir -p ~/.tmp/seafilescript
 
     printf "\n\n !! System will reboot in 10 seconds for group changes to take effect. !! Terminate (Ctrl + C) to stop this.\n !! Run the script again to continue with configuration !!"
     sleep 10 && sudo reboot
@@ -71,10 +71,10 @@ tailscale() {
 
 main() {
     if [ -d ~/.tmp ]; then DEL_TMP_DIR="false"; else DEL_TMP_DIR="true" && mkdir ~/.tmp; fi
-    if [ ! -f ~/.tmp/seafile_2ndrun ]; then FIRSTRUN="true"; else FIRSTRUN="false"; fi
+    if [ ! -d ~/.tmp/seafilescript ]; then FIRSTRUN="true"; else FIRSTRUN="false"; fi
     if [ "$FIRSTRUN" == "true" ]; then first_run; else second_run; fi
 
-    if [ "$DEL_TMP_DIR" == "false" ]; then rm ~/.tmp/seafile_2ndrun; else rm -rf ~/.tmp; fi
+    if [ "$DEL_TMP_DIR" == "false" ]; then rm -rf ~/.tmp/seafilescript; else rm -rf ~/.tmp; fi   # using touch doesn't work for some reason, idk man im just a fish
 
     printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1) on port 80.\n"
     read -p "Install and configure Tailscale? (Y/n)" tailscaler
