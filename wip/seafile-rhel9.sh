@@ -5,6 +5,8 @@
 ### version: 0.1
 ###
 
+## TODO: detect whether specified partition is already in fstab and/or already mounted
+
 set -e
 
 without_docker_group() {
@@ -17,26 +19,29 @@ without_docker_group() {
 	sudo systemctl enable --now docker 
 	sudo usermod -aG docker $(whoami)
 
-	printf "\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
+	printf "\n\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
 	return 1
 }
 
 with_docker_group() {
-	printf "\nSetting up directories and mounts for Seafile...\n"
-	printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
+	printf "\nSetting up new directories and mounts for Seafile...\n"
+	printf "\n!! You should have a partition made to use with Seafile !!\nIf you do not, exit this script and create it, then run this script again.\n"
 	sleep 7 && sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
 	cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
+	docker compose up -d
+	printf "\nGiving Seafile a 'settle time' of 20sec before shutting down again (issues with mysql pop up if this is not done)\n" && sleep 20
+	docker compose down
+
 	clear; lsblk && sudo blkid
-	printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes\n"
+	printf "\n\nPlease copy the UUID of the drive partition you'd like to use for Seafile data and paste it here, without quotes and without the 'UUID='\n"
 	read -p "Enter here: " uuid
 	printf "\nNice! Now pick a place for the drive to be mounted (something like /mnt/seafile, DO NOT ADD trailing /)\n"
 	read -p "Enter here: " drive_loc
-
 	filesystem=$(lsblk -f /dev/disk/by-uuid/$uuid)
 	filesystem=${filesystem#*$'\n'}
-	filesystem=$(echo "$filesystem" | awk	'{print $2}')
+	filesystem=$(echo "$filesystem" | awk '{print $2}')
 
-	echo "UUID=$uuid $drive_loc $filesystem	defaults	0 0" | sudo tee -a /etc/fstab
+	echo "UUID=$uuid   $drive_loc   $filesystem	  defaults   0 0" | sudo tee -a /etc/fstab
 	printf "\nThis partition has been added to fstab and will mount automatically every reboot.\n" && sleep 2
 	sudo systemctl daemon-reload
 	[ ! -d "$drive_loc" ] && sudo mkdir "$drive_loc"
