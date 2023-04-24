@@ -7,7 +7,7 @@
 
 set -e
 
-setup() {
+without_docker_group() {
 	printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n "
 	printf "You should also have a partition already setup to use for Seafile data\n\n" && sleep 10
 
@@ -15,8 +15,13 @@ setup() {
 	sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
 	sudo dnf install -y docker-ce docker-ce-cli containerd.io
 	sudo systemctl enable --now docker 
-	sudo usermod -aG docker $(whoami) && sg docker
+	sudo usermod -aG docker $(whoami)
 
+    printf "\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
+    return 1
+}
+
+with_docker_group() {
 	printf "\nSetting up directories and mounts for Seafile...\n"
 	printf "\n!! You should have a partition made to use with Seafile !!\n If you do not, exit this script and create it, then run this script again.\n"
 	sleep 7 && sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
@@ -64,6 +69,11 @@ tailscale() {
 }
 
 main() {
+	if id -nG "$USER" | grep -qw "docker"; then
+    	with_docker_group
+	else
+    	without_docker_group
+	fi
 
 	setup 
 
