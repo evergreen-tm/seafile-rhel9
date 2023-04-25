@@ -7,7 +7,7 @@
 
 set -e
 
-without_docker_group() {
+setup() {
 	printf "\n DISCLAIMER: This script is meant to be ran on a fresh install, and may not work properly if it is not ran on such. I am not responsible for anything that happens. \n "
 	printf "You should also have a partition already setup to use for Seafile data\n\n" && sleep 10
 
@@ -16,12 +16,9 @@ without_docker_group() {
 	sudo dnf install -y docker-ce docker-ce-cli containerd.io
 	sudo systemctl enable --now docker 
 	sudo usermod -aG docker $(whoami)
+    sudo gpasswd -r docker
+	newgrp docker
 
-	printf "\n\nYou will now need to log out and back in (or reboot, as it's the safest bet) so that groups refresh and docker containers can be ran. \nRun this script again once you have done so and it will pick up where it left off.\n"
-	return 1
-}
-
-with_docker_group() {
 	printf "\nSetting up Seafile...\n"
 	sudo mkdir -p /srv/www/seafile && sudo chown -R $(whoami) /srv/www/seafile
 	cd /srv/www/seafile && curl -fLO https://raw.githubusercontent.com/fishe-tm/seafile-rhel9/main/docker-compose.yml
@@ -73,11 +70,7 @@ tailscale() {
 }
 
 main() {
-	if id -nG "$USER" | grep -qw "docker"; then
-    	with_docker_group
-	else
-    	without_docker_group
-	fi
+	setup
 
 	printf "\nSeafile is now running and can be accessed locally at $(hostname -I | cut -d' ' -f1) on port 80.\n\n"
 	read -p "Install and configure Tailscale? (Y/n) " tailscaler
